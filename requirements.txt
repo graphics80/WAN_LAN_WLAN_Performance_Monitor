@@ -1,0 +1,6 @@
+apscheduler==3.10.4
+influxdb-client==1.42.0
+netifaces==0.11.0
+requests==2.31.0
+schedule==1.2.1
+speedtest-cli==2.1.3
