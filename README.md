@@ -15,15 +15,29 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
 - Docker (for InfluxDB and Grafana)
 
 ## Installation
-1. Install Python dependencies:
+1. Create and activate a virtual environment (recommended):
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   ```
+2. Install Python dependencies inside the venv:
    ```bash
    pip install -r requirements.txt
    ```
-2. Copy `.env.example` to `.env` and adjust values (used by both the monitor and docker-compose):
+3. Install required CLI tools (host-level):
+   ```bash
+   # Speedtest CLI
+   sudo pip install speedtest-cli
+   # or use the Debian/Ubuntu package: sudo apt-get install speedtest-cli
+
+   # ICMP + downloads rely on ping and wget
+   sudo apt-get install iputils-ping wget
+   ```
+4. Copy `.env.example` to `.env` and adjust values (used by both the monitor and docker-compose):
    ```bash
    cp .env.example .env
    ```
-3. Start the monitor locally:
+5. Start the monitor locally from the activated venv:
    ```bash
    python monitor.py
    ```
