@@ -26,6 +26,10 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
    ```
 3. Install required CLI tools (host-level):
    ```bash
+
+   # Speedtest CLI
+   sudo pip install speedtest-cli
+   # or use the Debian/Ubuntu package: sudo apt-get install speedtest-cli
    # ICMP + downloads rely on ping and wget
    sudo apt-get install iputils-ping wget
    ```
