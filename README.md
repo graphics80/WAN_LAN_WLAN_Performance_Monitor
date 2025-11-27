@@ -4,7 +4,7 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
 
 ## Features
 - Ping latency for multiple targets every minute (per interface)
-- Speedtest download/upload every 30 minutes (per interface) using the Speedtest CLI
+- Speedtest download/upload every 60 minutes (per interface) using the Speedtest CLI
 - Download-based bandwidth checks every 5 minutes for 5 MB, 50 MB, and 80 MB files (per interface)
 - Metrics written to InfluxDB 2.x; Grafana dashboards can query the bucket directly
 
@@ -26,10 +26,10 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
    ```
 3. Install required CLI tools (host-level):
    ```bash
+
    # Speedtest CLI
    sudo pip install speedtest-cli
    # or use the Debian/Ubuntu package: sudo apt-get install speedtest-cli
-
    # ICMP + downloads rely on ping and wget
    sudo apt-get install iputils-ping wget
    ```
@@ -44,7 +44,7 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
 
 ### Scheduling intervals
 - `PING_INTERVAL_MINUTES` (default: 1)
-- `SPEEDTEST_INTERVAL_MINUTES` (default: 30)
+- `SPEEDTEST_INTERVAL_MINUTES` (default: 60)
 - `DOWNLOAD_INTERVAL_MINUTES` (default: 5)
 - `PING_COUNT` controls how many ICMP packets are sent per ping run (default: 4)
 
@@ -76,6 +76,6 @@ The script writes the following measurements:
 - `download_test` (`bandwidth_mbps`, `file_size_bytes`, `duration_seconds` fields; `interface`, `file` tags)
 
 ## Notes for Raspberry Pi
-- Ensure `speedtest` CLI is installed (`pip install speedtest-cli` or use the deb package if available).
+- The Speedtest CLI is installed via `pip install -r requirements.txt` (version pinned in `requirements.txt`).
 - The download tests use `wget` with the interface-bound IP (`--bind-address`) to ensure traffic uses the selected interface.
 - Make sure the specified test files exist at `DOWNLOAD_BASE_URL` and are reachable from both interfaces.

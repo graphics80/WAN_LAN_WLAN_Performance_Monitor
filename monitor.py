@@ -22,9 +22,7 @@ class AppConfig:
     ping_interfaces: List[str] = field(default_factory=lambda: ["eth0", "wlan0"])
     ping_count: int = int(os.getenv("PING_COUNT", "4"))
     ping_interval_minutes: int = int(os.getenv("PING_INTERVAL_MINUTES", "1"))
-
-    speedtest_interval_minutes: int = int(os.getenv("SPEEDTEST_INTERVAL_MINUTES", "30"))
-
+    speedtest_interval_minutes: int = int(os.getenv("SPEEDTEST_INTERVAL_MINUTES", "60"))
     download_interval_minutes: int = int(os.getenv("DOWNLOAD_INTERVAL_MINUTES", "5"))
     download_base_url: str = os.getenv("DOWNLOAD_BASE_URL", "https://example.com/test-files")
     download_files: List[str] = field(
