@@ -14,44 +14,62 @@ import netifaces
 from apscheduler.schedulers.background import BackgroundScheduler
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
+from influxdb_client.rest import ApiException
 
 
 @dataclass
 class AppConfig:
     ping_targets: List[str] = field(default_factory=lambda: ["www.google.ch", "wiki.bzz.ch"])
     ping_interfaces: List[str] = field(default_factory=lambda: ["eth0", "wlan0"])
-    ping_count: int = int(os.getenv("PING_COUNT", "4"))
-    ping_interval_minutes: int = int(os.getenv("PING_INTERVAL_MINUTES", "1"))
-    speedtest_interval_minutes: int = int(os.getenv("SPEEDTEST_INTERVAL_MINUTES", "60"))
-    download_interval_minutes: int = int(os.getenv("DOWNLOAD_INTERVAL_MINUTES", "5"))
-    download_base_url: str = os.getenv("DOWNLOAD_BASE_URL", "https://example.com/test-files")
-    download_files: List[str] = field(
-        default_factory=lambda: [
-            "5mb.zip",
-            "50mb.zip",
-            "80mb.zip",
-        ]
-    )
+    ping_count: int = 4
+    ping_interval_minutes: int = 1
+    speedtest_interval_minutes: int = 60
+    download_interval_minutes: int = 5
+    download_base_url: str = "https://example.com/test-files"
+    download_files: List[str] = field(default_factory=lambda: ["5mb.zip", "50mb.zip", "80mb.zip"])
 
-    influx_url: str = os.getenv("INFLUX_URL", "http://localhost:8086")
-    influx_token: str = os.getenv("INFLUX_TOKEN", "")
-    influx_org: str = os.getenv("INFLUX_ORG", "wan-monitor")
-    influx_bucket: str = os.getenv("INFLUX_BUCKET", "wan-monitor")
+    influx_url: str = "http://localhost:8086"
+    influx_token: str = ""
+    influx_org: str = "wan-monitor"
+    influx_bucket: str = "wan-monitor"
 
     @staticmethod
     def from_env() -> "AppConfig":
-        ping_targets_env = os.getenv("PING_TARGETS")
-        download_files_env = os.getenv("DOWNLOAD_FILES")
-        ping_interfaces_env = os.getenv("PING_INTERFACES")
+        default_ping_targets = ["www.google.ch", "wiki.bzz.ch"]
+        default_ping_interfaces = ["eth0", "wlan0"]
+        default_download_files = ["5mb.zip", "50mb.zip", "80mb.zip"]
 
-        cfg = AppConfig()
-        if ping_targets_env:
-            cfg.ping_targets = [host.strip() for host in ping_targets_env.split(",") if host.strip()]
-        if download_files_env:
-            cfg.download_files = [name.strip() for name in download_files_env.split(",") if name.strip()]
-        if ping_interfaces_env:
-            cfg.ping_interfaces = [name.strip() for name in ping_interfaces_env.split(",") if name.strip()]
-        return cfg
+        def parse_list(env_name: str, fallback: List[str]) -> List[str]:
+            raw = os.getenv(env_name)
+            if not raw:
+                return fallback
+            parsed = [item.strip() for item in raw.split(",") if item.strip()]
+            return parsed if parsed else fallback
+
+        def parse_int(env_name: str, fallback: int) -> int:
+            raw = os.getenv(env_name)
+            if raw is None:
+                return fallback
+            try:
+                return int(raw)
+            except ValueError:
+                logging.warning("Invalid value for %s=%s, using default %s", env_name, raw, fallback)
+                return fallback
+
+        return AppConfig(
+            ping_targets=parse_list("PING_TARGETS", default_ping_targets),
+            ping_interfaces=parse_list("PING_INTERFACES", default_ping_interfaces),
+            ping_count=parse_int("PING_COUNT", 4),
+            ping_interval_minutes=parse_int("PING_INTERVAL_MINUTES", 1),
+            speedtest_interval_minutes=parse_int("SPEEDTEST_INTERVAL_MINUTES", 60),
+            download_interval_minutes=parse_int("DOWNLOAD_INTERVAL_MINUTES", 5),
+            download_base_url=os.getenv("DOWNLOAD_BASE_URL", "https://example.com/test-files"),
+            download_files=parse_list("DOWNLOAD_FILES", default_download_files),
+            influx_url=os.getenv("INFLUX_URL", "http://localhost:8086"),
+            influx_token=os.getenv("INFLUX_TOKEN") or os.getenv("INFLUXDB_TOKEN", ""),
+            influx_org=os.getenv("INFLUX_ORG", "wan-monitor"),
+            influx_bucket=os.getenv("INFLUX_BUCKET", "wan-monitor"),
+        )
 
 
 def configure_logging() -> None:
@@ -59,6 +77,26 @@ def configure_logging() -> None:
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
     )
+
+
+def load_env_from_file(env_path: str = ".env") -> None:
+    """
+    Populate os.environ using a local .env file when environment variables are not already set.
+    Existing environment values take precedence over file entries.
+    """
+    path = Path(env_path)
+    if not path.exists():
+        return
+
+    for line in path.read_text().splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if key and key not in os.environ:
+            os.environ[key] = value
 
 
 def get_interface_ip(interface: str) -> Optional[str]:
@@ -77,6 +115,10 @@ def create_influx_client(config: AppConfig) -> InfluxDBClient:
 
 
 def write_metric(client: InfluxDBClient, config: AppConfig, measurement: str, tags: Dict[str, str], fields: Dict[str, float]) -> None:
+    if not config.influx_token:
+        logging.warning("Skipping InfluxDB write for %s: INFLUX_TOKEN not set", measurement)
+        return
+
     point = Point(measurement)
     for key, value in tags.items():
         point = point.tag(key, value)
@@ -84,7 +126,12 @@ def write_metric(client: InfluxDBClient, config: AppConfig, measurement: str, ta
         point = point.field(key, value)
 
     write_api = client.write_api(write_options=SYNCHRONOUS)
-    write_api.write(bucket=config.influx_bucket, org=config.influx_org, record=point)
+    try:
+        write_api.write(bucket=config.influx_bucket, org=config.influx_org, record=point)
+    except ApiException as exc:
+        logging.error("Failed to write %s to InfluxDB: %s", measurement, exc)
+    except Exception:
+        logging.exception("Unexpected error while writing %s to InfluxDB", measurement)
 
 
 def parse_ping_output(output: str) -> Optional[float]:
@@ -140,10 +187,8 @@ def run_speedtest_for_interface(interface: str) -> Optional[Dict[str, float]]:
 
     cmd = [
         "speedtest",
-        "--format=json",
+        "--json",
         "--secure",
-        "--accept-license",
-        "--accept-gdpr",
         "--source",
         source_ip,
     ]
@@ -155,14 +200,17 @@ def run_speedtest_for_interface(interface: str) -> Optional[Dict[str, float]]:
 
     try:
         payload = json.loads(result.stdout)
-        download_bps = payload.get("download", {}).get("bandwidth")
-        upload_bps = payload.get("upload", {}).get("bandwidth")
+        download_bps = payload.get("download")
+        upload_bps = payload.get("upload")
+        ping_ms = payload.get("ping")
         if download_bps is None or upload_bps is None:
             logging.warning("Unexpected speedtest output on %s", interface)
             return None
         return {
-            "download_mbps": (download_bps * 8) / 1_000_000,
-            "upload_mbps": (upload_bps * 8) / 1_000_000,
+            # speedtest-cli reports bits per second
+            "download_mbps": download_bps / 1_000_000,
+            "upload_mbps": upload_bps / 1_000_000,
+            "ping_ms": float(ping_ms) if ping_ms is not None else None,
         }
     except json.JSONDecodeError:
         logging.warning("Could not decode speedtest output on %s", interface)
@@ -175,6 +223,8 @@ def run_speedtests(client: InfluxDBClient, config: AppConfig) -> None:
         metrics = run_speedtest_for_interface(interface)
         if not metrics:
             continue
+        if metrics.get("ping_ms") is None:
+            metrics.pop("ping_ms", None)
         write_metric(
             client,
             config,
@@ -267,6 +317,7 @@ def start_scheduler(client: InfluxDBClient, config: AppConfig) -> BackgroundSche
 
 def main() -> None:
     configure_logging()
+    load_env_from_file()
     config = AppConfig.from_env()
     client = create_influx_client(config)
 

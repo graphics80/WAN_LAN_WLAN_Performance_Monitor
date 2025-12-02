@@ -1,0 +1,681 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "wanmonitor"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dtdurationms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 17,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "www.google.ch LAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "query": "SELECT mean(\"latency_ms\") FROM \"ping_latency\" WHERE $timeFilter AND \"host\"='www.google.ch' AND \"interface\"='eth0' GROUP BY time(1m) fill(null)\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "bandwidth_mbps::field",
+              "operator": "=",
+              "value": "select tag value"
+            }
+          ]
+        },
+        {
+          "alias": "www.google.ch WLAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "hide": false,
+          "query": "    SELECT mean(\"latency_ms\") FROM \"ping_latency\" WHERE $timeFilter AND \"host\"='www.google.ch' AND \"interface\"='wlan0' GROUP BY time(1m) fill(null)\n",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        },
+        {
+          "alias": "wiki.bzz.ch LAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "query": "SELECT mean(\"latency_ms\") FROM \"ping_latency\" WHERE $timeFilter AND \"host\"='wiki.bzz.ch' AND \"interface\"='eth0' GROUP BY time(1m) fill(null)\n",
+          "rawQuery": true,
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "bandwidth_mbps::field",
+              "operator": "=",
+              "value": "select tag value"
+            }
+          ]
+        },
+        {
+          "alias": "wiki.bzz.ch WLAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "hide": false,
+          "query": "    SELECT mean(\"latency_ms\") FROM \"ping_latency\" WHERE $timeFilter AND \"host\"='wiki.bzz.ch' AND \"interface\"='wlan0' GROUP BY time(1m) fill(null)\n",
+          "rawQuery": true,
+          "refId": "D",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Ping Zeiten",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "wanmonitor"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "MBs"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "Download WLAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "5m"
+              ],
+              "type": "time"
+            }
+          ],
+          "hide": false,
+          "measurement": "download_test",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "bandwidth_mbps"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interface::tag",
+              "operator": "=",
+              "value": "wlan0"
+            }
+          ]
+        },
+        {
+          "alias": "Download LAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "5m"
+              ],
+              "type": "time"
+            }
+          ],
+          "hide": false,
+          "measurement": "download_test",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "bandwidth_mbps"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interface::tag",
+              "operator": "=",
+              "value": "eth0"
+            }
+          ]
+        },
+        {
+          "alias": "Speedtest Download LAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "5m"
+              ],
+              "type": "time"
+            }
+          ],
+          "hide": false,
+          "measurement": "speedtest",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "download_mbps"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interface::tag",
+              "operator": "=",
+              "value": "eth0"
+            }
+          ]
+        },
+        {
+          "alias": "Speedtest Upload LAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "5m"
+              ],
+              "type": "time"
+            }
+          ],
+          "hide": false,
+          "measurement": "speedtest",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "D",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "upload_mbps"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interface::tag",
+              "operator": "=",
+              "value": "eth0"
+            }
+          ]
+        },
+        {
+          "alias": "Speedtest Download WLAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "5m"
+              ],
+              "type": "time"
+            }
+          ],
+          "hide": false,
+          "measurement": "speedtest",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "E",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "download_mbps"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interface::tag",
+              "operator": "=",
+              "value": "wlan0"
+            }
+          ]
+        },
+        {
+          "alias": "Speedtest Upload WLAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "5m"
+              ],
+              "type": "time"
+            }
+          ],
+          "hide": false,
+          "measurement": "speedtest",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "F",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "upload_mbps"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interface::tag",
+              "operator": "=",
+              "value": "wlan0"
+            }
+          ]
+        }
+      ],
+      "title": "Download Performance",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "wanmonitor"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dtdurations"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "query": "  SELECT mean(\"duration_seconds\") FROM \"download_test\" WHERE $timeFilter GROUP BY time(5m), \"file\", \"interface\" fill(null)\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Download Performance 5,50,80 Mb from it.bzz.ch",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "WAN WLAN Performance",
+  "uid": "cf5v8er3t16gwb",
+  "version": 9,
+  "weekStart": ""
+}

@@ -37,10 +37,63 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
    ```bash
    cp .env.example .env
    ```
-5. Start the monitor locally from the activated venv:
+   - `INFLUXDB_*` values configure the Docker containers.
+   - `INFLUX_*` values are read by the Python monitor; `INFLUX_TOKEN` falls back to `INFLUXDB_TOKEN` so you can keep them identical.
+5. Start InfluxDB + Grafana, which will be auto-configured from `.env`:
+   ```bash
+   docker compose up -d
+   ```
+6. Start the monitor locally from the activated venv (it auto-loads `.env`):
    ```bash
    python monitor.py
    ```
+
+### One-shot start script
+- Use `./start.sh` to launch Docker (InfluxDB + Grafana), wait briefly for Influx health, and then start the monitor (prefers `.venv/bin/python` if present). This script is used by the autostart service below.
+
+### Autostart via systemd (Raspberry Pi / Linux)
+1) Install the unit (already created during setup, but you can recreate it):
+   ```bash
+   cat <<'EOF' | sudo tee /etc/systemd/system/wan-monitor.service
+   [Unit]
+   Description=WAN/LAN/WLAN Performance Monitor
+   After=network-online.target docker.service
+   Wants=network-online.target docker.service
+
+   [Service]
+   Type=simple
+   User=pi
+   WorkingDirectory=/home/pi/WAN_LAN_WLAN_Performance_Monitor
+   ExecStart=/bin/bash /home/pi/WAN_LAN_WLAN_Performance_Monitor/start.sh
+   Restart=always
+   RestartSec=10
+   Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+   [Install]
+   WantedBy=multi-user.target
+   EOF
+   ```
+2) Reload units and enable autostart:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable wan-monitor.service
+   sudo systemctl start wan-monitor.service
+   ```
+3) Check status/logs:
+   ```bash
+   systemctl status --no-pager wan-monitor.service
+   journalctl -u wan-monitor.service -f
+   ```
+4) Manage service:
+   ```bash
+   sudo systemctl stop wan-monitor.service
+   sudo systemctl start wan-monitor.service
+   sudo systemctl disable wan-monitor.service   # turn off autostart
+   ```
+
+### Grafana provisioning
+- Datasource: provisioned from `provisioning/datasources/influx.yml` (InfluxQL, URL `http://influxdb:8086`, token/org/bucket from `.env`).
+- Dashboards: provisioned from `provisioning/dashboards/wan-wlan-performance.json` via `provisioning/dashboards/dashboards.yaml`. On a fresh clone, `docker compose up -d` will load the dashboard automatically.
 
 ### Scheduling intervals
 - `PING_INTERVAL_MINUTES` (default: 1)
