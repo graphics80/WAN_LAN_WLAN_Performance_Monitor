@@ -38,22 +38,61 @@ setup_venv() {
 }
 
 seed_env() {
-  if [[ ! -f ".env" ]]; then
+  if [[ -f ".env" ]]; then
+    log ".env already present; leaving as-is"
+    return
+  fi
+  read -r -p "No .env found. Copy .env.example to .env now? [y/N] " ans
+  if [[ "$ans" =~ ^[Yy]$ ]]; then
     log "Seeding .env from .env.example"
     cp .env.example .env
   else
-    log ".env already present; leaving as-is"
+    log "Skipping .env creation; create it manually before starting."
   fi
+}
+
+setup_systemd() {
+  read -r -p "Create and enable systemd service wan-monitor.service? [y/N] " ans
+  if [[ ! "$ans" =~ ^[Yy]$ ]]; then
+    log "Skipping systemd setup."
+    return
+  fi
+
+  SERVICE_PATH="/etc/systemd/system/wan-monitor.service"
+  log "Writing systemd unit to $SERVICE_PATH"
+  cat <<'EOF' | $SUDO tee "$SERVICE_PATH" >/dev/null
+[Unit]
+Description=WAN/LAN/WLAN Performance Monitor
+After=network-online.target docker.service
+Wants=network-online.target docker.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/WAN_LAN_WLAN_Performance_Monitor
+ExecStart=/bin/bash /home/pi/WAN_LAN_WLAN_Performance_Monitor/start.sh
+Restart=always
+RestartSec=10
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  log "Enabling and starting wan-monitor.service..."
+  $SUDO systemctl daemon-reload
+  $SUDO systemctl enable --now wan-monitor.service
 }
 
 main() {
   install_packages
   setup_venv
   seed_env
+  setup_systemd
   log "Bootstrap complete. Next steps:"
   log "  1) Review and edit .env (tokens, passwords, URLs)."
   log "  2) Start the stack: ./start.sh"
-  log "  3) Optional: enable systemd service (see README)."
+  log "  3) If you skipped systemd setup, you can add it later via install.sh."
 }
 
 main "$@"
