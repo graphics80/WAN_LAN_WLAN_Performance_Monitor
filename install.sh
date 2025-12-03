@@ -26,10 +26,11 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 log() { printf "==> %s\n" "$*"; }
+dry() { if [[ $DRY_RUN -eq 1 ]]; then printf "[dry-run] %s\n" "$*"; fi; }
 
 install_packages() {
   log "Updating apt cache..."
-  if [[ $DRY_RUN -eq 0 ]]; then $SUDO apt-get update -y; else log "[dry-run] skip apt update"; fi
+  if [[ $DRY_RUN -eq 0 ]]; then $SUDO apt-get update -y; else dry "skip: apt-get update -y"; fi
   log "Installing system packages..."
   if [[ $DRY_RUN -eq 0 ]]; then
     $SUDO apt-get install -y \
@@ -39,14 +40,15 @@ install_packages() {
     log "Enabling and starting Docker..."
     $SUDO systemctl enable --now docker
   else
-    log "[dry-run] skip apt install and Docker enable"
+    dry "skip: apt-get install -y python3-venv python3-pip iputils-ping wget curl docker.io docker-compose-plugin"
+    dry "skip: systemctl enable --now docker"
   fi
 }
 
 setup_venv() {
   if [[ ! -d ".venv" ]]; then
     log "Creating virtual environment..."
-    if [[ $DRY_RUN -eq 0 ]]; then python3 -m venv .venv; else log "[dry-run] skip venv create"; fi
+    if [[ $DRY_RUN -eq 0 ]]; then python3 -m venv .venv; else dry "skip: python3 -m venv .venv"; fi
   fi
   log "Installing Python requirements..."
   if [[ $DRY_RUN -eq 0 ]]; then
@@ -54,7 +56,9 @@ setup_venv() {
     pip install --upgrade pip
     pip install -r requirements.txt
   else
-    log "[dry-run] skip pip install"
+    dry "skip: source .venv/bin/activate"
+    dry "skip: pip install --upgrade pip"
+    dry "skip: pip install -r requirements.txt"
   fi
 }
 
@@ -66,7 +70,7 @@ seed_env() {
   read -r -p "No .env found. Copy .env.example to .env now? [y/N] " ans
   if [[ "$ans" =~ ^[Yy]$ ]]; then
     log "Seeding .env from .env.example"
-    if [[ $DRY_RUN -eq 0 ]]; then cp .env.example .env; else log "[dry-run] skip env copy"; fi
+    if [[ $DRY_RUN -eq 0 ]]; then cp .env.example .env; else dry "skip: cp .env.example .env"; fi
   else
     log "Skipping .env creation; create it manually before starting."
   fi
@@ -105,7 +109,9 @@ EOF
   $SUDO systemctl daemon-reload
   $SUDO systemctl enable --now wan-monitor.service
   else
-    log "[dry-run] skip writing/starting systemd service"
+    dry "skip: write $SERVICE_PATH"
+    dry "skip: systemctl daemon-reload"
+    dry "skip: systemctl enable --now wan-monitor.service"
   fi
 }
 
