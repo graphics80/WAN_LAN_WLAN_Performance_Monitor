@@ -54,6 +54,10 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
 - `./start.sh` also resets the Grafana admin password each time to the value in `.env` (`GRAFANA_PASSWORD`), so updates take effect even with a persistent data volume.
 - Use `./restart.sh` to stop the systemd service (or the monitor process if systemd is unavailable), bring the Docker stack down, and start everything again so `.env` changes are applied.
 
+### Bootstrap script
+- Run `./install.sh` on a fresh Pi to install system dependencies (Docker + compose plugin, ping/wget, Python venv), create the venv and install requirements, optionally copy `.env.example` to `.env`, and optionally install/enable the `wan-monitor.service` systemd unit.
+- Use `./install.sh --dry-run` to see what would be done without making changes.
+
 ### Autostart via systemd (Raspberry Pi / Linux)
 1) Install the unit (already created during setup, but you can recreate it):
    ```bash

@@ -5,6 +5,19 @@ set -euo pipefail
 # Installs system deps, Docker, Python venv + requirements, and seeds .env.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DRY_RUN=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
 cd "$ROOT_DIR"
 
 SUDO=""
@@ -16,25 +29,33 @@ log() { printf "==> %s\n" "$*"; }
 
 install_packages() {
   log "Updating apt cache..."
-  $SUDO apt-get update -y
+  if [[ $DRY_RUN -eq 0 ]]; then $SUDO apt-get update -y; else log "[dry-run] skip apt update"; fi
   log "Installing system packages..."
-  $SUDO apt-get install -y \
-    python3-venv python3-pip \
-    iputils-ping wget curl \
-    docker.io docker-compose-plugin
-  log "Enabling and starting Docker..."
-  $SUDO systemctl enable --now docker
+  if [[ $DRY_RUN -eq 0 ]]; then
+    $SUDO apt-get install -y \
+      python3-venv python3-pip \
+      iputils-ping wget curl \
+      docker.io docker-compose-plugin
+    log "Enabling and starting Docker..."
+    $SUDO systemctl enable --now docker
+  else
+    log "[dry-run] skip apt install and Docker enable"
+  fi
 }
 
 setup_venv() {
   if [[ ! -d ".venv" ]]; then
     log "Creating virtual environment..."
-    python3 -m venv .venv
+    if [[ $DRY_RUN -eq 0 ]]; then python3 -m venv .venv; else log "[dry-run] skip venv create"; fi
   fi
   log "Installing Python requirements..."
-  . .venv/bin/activate
-  pip install --upgrade pip
-  pip install -r requirements.txt
+  if [[ $DRY_RUN -eq 0 ]]; then
+    . .venv/bin/activate
+    pip install --upgrade pip
+    pip install -r requirements.txt
+  else
+    log "[dry-run] skip pip install"
+  fi
 }
 
 seed_env() {
@@ -45,7 +66,7 @@ seed_env() {
   read -r -p "No .env found. Copy .env.example to .env now? [y/N] " ans
   if [[ "$ans" =~ ^[Yy]$ ]]; then
     log "Seeding .env from .env.example"
-    cp .env.example .env
+    if [[ $DRY_RUN -eq 0 ]]; then cp .env.example .env; else log "[dry-run] skip env copy"; fi
   else
     log "Skipping .env creation; create it manually before starting."
   fi
@@ -60,7 +81,8 @@ setup_systemd() {
 
   SERVICE_PATH="/etc/systemd/system/wan-monitor.service"
   log "Writing systemd unit to $SERVICE_PATH"
-  cat <<'EOF' | $SUDO tee "$SERVICE_PATH" >/dev/null
+  if [[ $DRY_RUN -eq 0 ]]; then
+    cat <<'EOF' | $SUDO tee "$SERVICE_PATH" >/dev/null
 [Unit]
 Description=WAN/LAN/WLAN Performance Monitor
 After=network-online.target docker.service
@@ -82,6 +104,9 @@ EOF
   log "Enabling and starting wan-monitor.service..."
   $SUDO systemctl daemon-reload
   $SUDO systemctl enable --now wan-monitor.service
+  else
+    log "[dry-run] skip writing/starting systemd service"
+  fi
 }
 
 main() {
