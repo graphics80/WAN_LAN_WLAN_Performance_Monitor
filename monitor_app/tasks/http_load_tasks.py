@@ -9,9 +9,9 @@ from locust import HttpUser, constant, task
 from locust.env import Environment
 from locust.runners import LocalRunner
 
-from config import AppConfig
-from metrics import write_metric
-from net_utils import get_interface_ip
+from monitor_app.config import AppConfig
+from monitor_app.metrics import write_metric
+from monitor_app.net_utils import get_interface_ip
 
 
 def bind_http_session_to_source(http_session: "requests.sessions.Session", source_ip: str) -> None:

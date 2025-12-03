@@ -6,7 +6,7 @@ from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb_client.rest import ApiException
 
-from config import AppConfig
+from monitor_app.config import AppConfig
 
 
 def create_influx_client(config: AppConfig) -> InfluxDBClient:

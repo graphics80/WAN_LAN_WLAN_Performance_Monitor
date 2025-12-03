@@ -3,11 +3,11 @@ from datetime import datetime
 
 from apscheduler.schedulers.gevent import GeventScheduler
 
-from config import AppConfig
-from download_tasks import run_download_tests
-from http_load_tasks import schedule_http_load_jobs
-from ping_tasks import run_ping_checks
-from speedtest_tasks import run_speedtests
+from monitor_app.config import AppConfig
+from monitor_app.tasks.download_tasks import run_download_tests
+from monitor_app.tasks.http_load_tasks import schedule_http_load_jobs
+from monitor_app.tasks.ping_tasks import run_ping_checks
+from monitor_app.tasks.speedtest_tasks import run_speedtests
 
 
 def start_scheduler(client, config: AppConfig) -> GeventScheduler:

@@ -1,11 +1,11 @@
 import logging
 import shlex
 import subprocess
-from typing import Dict, List, Optional
+from typing import Optional
 
-from config import AppConfig
-from metrics import write_metric
-from net_utils import get_interface_ip  # noqa: F401 (used indirectly via type hints, keeps symmetry)
+from monitor_app.config import AppConfig
+from monitor_app.metrics import write_metric
+from monitor_app.net_utils import get_interface_ip  # noqa: F401 (kept for symmetry)
 
 
 def parse_ping_output(output: str) -> Optional[float]:

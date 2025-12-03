@@ -5,9 +5,9 @@ import time
 from pathlib import Path
 from typing import Dict, Optional
 
-from config import AppConfig
-from metrics import write_metric
-from net_utils import get_interface_ip
+from monitor_app.config import AppConfig
+from monitor_app.metrics import write_metric
+from monitor_app.net_utils import get_interface_ip
 
 
 def download_file(url: str, interface: str) -> Optional[Dict[str, float]]:
