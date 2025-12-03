@@ -56,7 +56,7 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
 
 ### Bootstrap script
 - Run `./install.sh` on a fresh Pi to install system dependencies (Docker + compose plugin, ping/wget, Python venv), create the venv and install requirements, optionally copy `.env.example` to `.env`, and optionally install/enable the `wan-monitor.service` systemd unit.
-- Use `./install.sh --dry-run` to see what would be done without making changes.
+- `./install.sh --dry-run` prints each step it would take (apt installs, Docker enable, venv/pip steps, env copy, systemd write) without making changes.
 
 ### Autostart via systemd (Raspberry Pi / Linux)
 1) Install the unit (already created during setup, but you can recreate it):
