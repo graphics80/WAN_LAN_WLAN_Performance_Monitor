@@ -19,6 +19,13 @@ for i in {1..15}; do
   sleep 2
 done
 
+# Reset Grafana admin password on each start to match .env (works even if data volume persists).
+GRAFANA_PW="${GRAFANA_PASSWORD:-admin}"
+GRAFANA_CONTAINER="$(docker compose ps -q grafana || true)"
+if [[ -n "$GRAFANA_CONTAINER" && -n "$GRAFANA_PW" ]]; then
+  docker exec "$GRAFANA_CONTAINER" grafana-cli admin reset-admin-password "$GRAFANA_PW" >/dev/null 2>&1 || true
+fi
+
 # Choose Python: prefer local venv if available.
 if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
   PYTHON="$ROOT_DIR/.venv/bin/python"
