@@ -1,14 +1,9 @@
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from typing import Dict, List
 
-from gevent import monkey
-
-# Avoid monkey-patching ssl/thread to sidestep Python 3.13 recursion issues.
-monkey.patch_all(ssl=False, thread=False)
-
-import gevent
 import requests
 from apscheduler.schedulers.gevent import GeventScheduler
 
@@ -50,7 +45,7 @@ def _collect_stats(durations_ms: List[float], failures: int) -> Dict[str, float]
 
 
 def run_http_load_for_target(interface: str, url: str, config: AppConfig) -> List[Dict[str, float]]:
-    """Run a lightweight HTTP load using gevent greenlets for a single URL/interface and return stats."""
+    """Run a lightweight HTTP load using threads for a single URL/interface and return stats."""
     source_ip = get_interface_ip(interface)
     if not source_ip:
         logging.warning("No IP found for interface %s, skipping HTTP load test", interface)
@@ -65,20 +60,23 @@ def run_http_load_for_target(interface: str, url: str, config: AppConfig) -> Lis
 
     def worker() -> None:
         nonlocal failures
-        while time.monotonic() < deadline:
-            start = time.perf_counter()
-            try:
-                resp = session.get(url, timeout=10)
-                elapsed_ms = (time.perf_counter() - start) * 1000
-                if resp.status_code < 400:
-                    durations.append(elapsed_ms)
-                else:
-                    failures += 1
-            except Exception:
+        start = time.perf_counter()
+        try:
+            resp = session.get(url, timeout=10)
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            if resp.status_code < 400:
+                durations.append(elapsed_ms)
+            else:
                 failures += 1
+        except Exception:
+            failures += 1
 
-    jobs = [gevent.spawn(worker) for _ in range(config.http_locust_users)]
-    gevent.joinall(jobs)
+    with ThreadPoolExecutor(max_workers=config.http_locust_users) as executor:
+        futures = []
+        while time.monotonic() < deadline:
+            futures.append(executor.submit(worker))
+        for _ in as_completed(futures):
+            pass
 
     stats = _collect_stats(durations, failures)
     return [
