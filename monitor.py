@@ -1,8 +1,8 @@
 import time
 
-from config import AppConfig, configure_logging, load_env_from_file
-from metrics import create_influx_client
-from scheduler import start_scheduler
+from monitor_app.config import AppConfig, configure_logging, load_env_from_file
+from monitor_app.metrics import create_influx_client
+from monitor_app.scheduler import start_scheduler
 
 
 def main() -> None:
