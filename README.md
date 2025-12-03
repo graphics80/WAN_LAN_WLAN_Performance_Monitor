@@ -51,6 +51,7 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
 
 ### One-shot start script
 - Use `./start.sh` to launch Docker (InfluxDB + Grafana), wait briefly for Influx health, and then start the monitor (prefers `.venv/bin/python` if present). This script is used by the autostart service below.
+- Use `./restart.sh` to stop the systemd service (or the monitor process if systemd is unavailable), bring the Docker stack down, and start everything again so `.env` changes are applied.
 
 ### Autostart via systemd (Raspberry Pi / Linux)
 1) Install the unit (already created during setup, but you can recreate it):
