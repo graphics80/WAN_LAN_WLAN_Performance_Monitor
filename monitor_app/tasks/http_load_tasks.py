@@ -135,7 +135,7 @@ def schedule_http_load_jobs(scheduler: GeventScheduler, client, config: AppConfi
             next_run = now + timedelta(minutes=offset_minutes)
             job_id = f"http_load_{interface}_{url_idx}"
             logging.info(
-                "Scheduling HTTP load for %s via %s every %s min (offset %.2f min)",
+                "Scheduling HTTP load: url=%s interface=%s interval=%s min offset=%.2f min",
                 url,
                 interface,
                 config.http_test_interval_minutes,
