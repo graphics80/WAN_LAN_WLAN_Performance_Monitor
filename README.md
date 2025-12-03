@@ -58,6 +58,9 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
 - Run `./install.sh` on a fresh Pi to install system dependencies (Docker + compose plugin, ping/wget, Python venv), create the venv and install requirements, optionally copy `.env.example` to `.env`, and optionally install/enable the `wan-monitor.service` systemd unit.
 - `./install.sh --dry-run` prints each step it would take (apt installs, Docker enable, venv/pip steps, env copy, systemd write) without making changes.
 
+### Hardware recommendation
+- A Raspberry Pi 5 with 8 GB RAM and at least 32 GB storage (SD or SSD), connected via both LAN and Wi‑Fi, is recommended for running the monitor, Docker stack, and Locust HTTP load tests.
+
 ### Autostart via systemd (Raspberry Pi / Linux)
 1) Install the unit (already created during setup, but you can recreate it):
    ```bash
