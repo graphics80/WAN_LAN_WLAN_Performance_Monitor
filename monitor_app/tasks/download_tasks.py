@@ -11,6 +11,7 @@ from monitor_app.net_utils import get_interface_ip
 
 
 def download_file(url: str, interface: str) -> Optional[Dict[str, float]]:
+    """Download a file via a specific interface and return bandwidth metrics."""
     source_ip = get_interface_ip(interface)
     if not source_ip:
         logging.warning("No IP found for interface %s, skipping download test", interface)
@@ -53,6 +54,7 @@ def download_file(url: str, interface: str) -> Optional[Dict[str, float]]:
 
 
 def run_download_tests(client, config: AppConfig) -> None:
+    """Run download tests per interface/file and write metrics."""
     logging.info("Starting download tests")
     for interface in config.ping_interfaces:
         for filename in config.download_files:

@@ -31,6 +31,7 @@ def bind_http_session_to_source(http_session: "requests.sessions.Session", sourc
 
 
 def make_http_user(urls: List[str], source_ip: str) -> type:
+    """Build a Locust HttpUser subclass bound to the given source IP."""
     class InterfaceHttpUser(HttpUser):  # type: ignore[misc]
         host = ""
         wait_time = constant(0)
@@ -49,6 +50,7 @@ def make_http_user(urls: List[str], source_ip: str) -> type:
 
 
 def run_http_load_for_target(interface: str, url: str, config: AppConfig) -> List[Dict[str, float]]:
+    """Run a headless Locust load for a single URL/interface and return stats."""
     source_ip = get_interface_ip(interface)
     if not source_ip:
         logging.warning("No IP found for interface %s, skipping HTTP load test", interface)
@@ -104,6 +106,7 @@ def run_http_load_for_target(interface: str, url: str, config: AppConfig) -> Lis
 
 
 def run_http_load_job(interface: str, url: str, client, config: AppConfig) -> None:
+    """Execute load test and write results to Influx."""
     stats = run_http_load_for_target(interface, url, config)
     for stat in stats:
         fields = {
@@ -131,6 +134,7 @@ def run_http_load_job(interface: str, url: str, client, config: AppConfig) -> No
 
 
 def schedule_http_load_jobs(scheduler: GeventScheduler, client, config: AppConfig) -> None:
+    """Schedule per-URL, per-interface HTTP load tests staggered within the interval."""
     urls = config.http_test_urls
     if not urls:
         logging.info("No HTTP test URLs configured; skipping HTTP load scheduling")

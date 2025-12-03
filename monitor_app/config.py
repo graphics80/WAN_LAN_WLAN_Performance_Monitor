@@ -7,6 +7,7 @@ from typing import List
 
 @dataclass
 class AppConfig:
+    """Runtime configuration loaded from environment variables (and optionally .env)."""
     ping_targets: List[str] = field(default_factory=lambda: ["www.google.ch", "wiki.bzz.ch"])
     ping_interfaces: List[str] = field(default_factory=lambda: ["eth0", "wlan0"])
     ping_count: int = 4
@@ -72,6 +73,7 @@ class AppConfig:
 
 
 def configure_logging() -> None:
+    """Configure root logger for the monitor."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",

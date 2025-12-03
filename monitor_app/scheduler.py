@@ -11,6 +11,7 @@ from monitor_app.tasks.speedtest_tasks import run_speedtests
 
 
 def start_scheduler(client, config: AppConfig) -> GeventScheduler:
+    """Set up recurring jobs for ping, speedtest, downloads, and HTTP load tests."""
     scheduler = GeventScheduler()
     logging.info("Scheduling ping checks every %s minute(s)", config.ping_interval_minutes)
     scheduler.add_job(

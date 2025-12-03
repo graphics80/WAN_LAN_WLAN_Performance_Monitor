@@ -10,6 +10,7 @@ from monitor_app.net_utils import get_interface_ip
 
 
 def run_speedtest_for_interface(interface: str) -> Optional[Dict[str, float]]:
+    """Execute speedtest-cli bound to an interface IP and return metrics in Mbps."""
     source_ip = get_interface_ip(interface)
     if not source_ip:
         logging.warning("No IP found for interface %s, skipping speedtest", interface)
@@ -47,6 +48,7 @@ def run_speedtest_for_interface(interface: str) -> Optional[Dict[str, float]]:
 
 
 def run_speedtests(client, config: AppConfig) -> None:
+    """Run speedtests per interface and write metrics."""
     logging.info("Starting speedtests")
     for interface in config.ping_interfaces:
         metrics = run_speedtest_for_interface(interface)

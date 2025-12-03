@@ -9,6 +9,7 @@ from monitor_app.net_utils import get_interface_ip  # noqa: F401 (kept for symme
 
 
 def parse_ping_output(output: str) -> Optional[float]:
+    """Extract average latency from ping output."""
     for line in output.splitlines():
         if "rtt min/avg/max" in line or "round-trip min/avg/max" in line:
             parts = line.split("=")
@@ -24,6 +25,7 @@ def parse_ping_output(output: str) -> Optional[float]:
 
 
 def ping_host(host: str, interface: str, count: int) -> Optional[float]:
+    """Run ping bound to an interface and return avg latency in ms."""
     cmd = ["ping", "-I", interface, "-c", str(count), "-q", host]
     logging.debug("Running ping: %s", shlex.join(cmd))
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -37,6 +39,7 @@ def ping_host(host: str, interface: str, count: int) -> Optional[float]:
 
 
 def run_ping_checks(client, config: AppConfig) -> None:
+    """Ping all configured hosts per interface and write metrics."""
     logging.info("Starting ping checks")
     for interface in config.ping_interfaces:
         for host in config.ping_targets:

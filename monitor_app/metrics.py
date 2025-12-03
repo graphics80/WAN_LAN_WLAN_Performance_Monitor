@@ -10,10 +10,12 @@ from monitor_app.config import AppConfig
 
 
 def create_influx_client(config: AppConfig) -> InfluxDBClient:
+    """Build an InfluxDB client from config."""
     return InfluxDBClient(url=config.influx_url, token=config.influx_token, org=config.influx_org)
 
 
 def write_metric(client: InfluxDBClient, config: AppConfig, measurement: str, tags: Dict[str, str], fields: Dict[str, float]) -> None:
+    """Write a single measurement to InfluxDB with tags/fields, handling common errors."""
     if not config.influx_token:
         logging.warning("Skipping InfluxDB write for %s: INFLUX_TOKEN not set", measurement)
         return
