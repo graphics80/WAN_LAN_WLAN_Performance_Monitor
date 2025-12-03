@@ -25,7 +25,304 @@
         "type": "influxdb",
         "uid": "wanmonitor"
       },
-      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "p95 LAN Lerngalaxie",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "http_load_test",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "p95_ms"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "distinct"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interface::tag",
+              "operator": "=",
+              "value": "eth0"
+            },
+            {
+              "condition": "AND",
+              "key": "target::tag",
+              "operator": "=",
+              "value": "https://lerngalaxie.verlagskv.ch"
+            }
+          ]
+        },
+        {
+          "alias": "p95 WLAN Lerngalaxie",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "http_load_test",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "p95_ms"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "distinct"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interface::tag",
+              "operator": "=",
+              "value": "wlan0"
+            },
+            {
+              "condition": "AND",
+              "key": "target::tag",
+              "operator": "=",
+              "value": "https://lerngalaxie.verlagskv.ch"
+            }
+          ]
+        },
+        {
+          "alias": "p95 LAN Smartlearn",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "http_load_test",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "p95_ms"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "distinct"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interface::tag",
+              "operator": "=",
+              "value": "eth0"
+            },
+            {
+              "condition": "AND",
+              "key": "target::tag",
+              "operator": "=",
+              "value": "https://smartlearn.one"
+            }
+          ]
+        },
+        {
+          "alias": "p95 WLAN Smartlearn",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "http_load_test",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "D",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "p95_ms"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "distinct"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interface::tag",
+              "operator": "=",
+              "value": "wlan0"
+            },
+            {
+              "condition": "AND",
+              "key": "target::tag",
+              "operator": "=",
+              "value": "https://smartlearn.one"
+            }
+          ]
+        }
+      ],
+      "title": "HTTP p95",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "wanmonitor"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -113,7 +410,7 @@
         "h": 17,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 15
       },
       "id": 1,
       "options": {
@@ -516,7 +813,7 @@
         "h": 14,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 32
       },
       "id": 2,
       "options": {
@@ -853,7 +1150,7 @@
         "h": 14,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 46
       },
       "id": 3,
       "options": {
@@ -885,20 +1182,19 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "2025-12-03T08:18:18.819Z",
-    "to": "2025-12-03T08:47:24.778Z"
+    "from": "now-6h",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "WAN WLAN Performance",
   "uid": "cf5v8er3t16gwb",
-  "version": 10,
+  "version": 1,
   "weekStart": ""
 }
