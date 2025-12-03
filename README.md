@@ -6,6 +6,7 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
 - Ping latency for multiple targets every minute (per interface)
 - Speedtest download/upload every 60 minutes (per interface) using the Speedtest CLI
 - Download-based bandwidth checks every 5 minutes for 5 MB, 50 MB, and 80 MB files (per interface)
+- HTTP end-to-end load tests with Locust (configurable targets/users, per interface)
 - Metrics written to InfluxDB 2.x; Grafana dashboards can query the bucket directly
 
 ## Requirements
@@ -99,6 +100,7 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
 - `PING_INTERVAL_MINUTES` (default: 1)
 - `SPEEDTEST_INTERVAL_MINUTES` (default: 60)
 - `DOWNLOAD_INTERVAL_MINUTES` (default: 5)
+- `HTTP_TEST_INTERVAL_MINUTES` (default: 15)
 - `PING_COUNT` controls how many ICMP packets are sent per ping run (default: 4)
 
 ### Interfaces
@@ -107,6 +109,13 @@ The script uses `eth0` and `wlan0` by default. Override with:
 export PING_INTERFACES="eth0,wlan0"
 ```
 *(Note: speedtests and downloads rely on the interface IP being assigned.)*
+
+### HTTP load tests (Locust)
+- Configure targets with `HTTP_TEST_URLS` (comma separated, full URLs).
+- Concurrency and pacing: `HTTP_LOCUST_USERS` (default: 20 for Pi), `HTTP_LOCUST_SPAWN_RATE` (default: 10), `HTTP_TEST_DURATION_SECONDS` (default: 30).
+- Runs are scheduled per URL and staggered evenly within `HTTP_TEST_INTERVAL_MINUTES` to avoid overlapping load; one job per URL per interface.
+- Each run executes in headless mode per interface and records request totals, failure ratio, avg/p95 latency to Influx (`http_load_test`).
+- Ensure `locust` is installed via `pip install -r requirements.txt`.
 
 ## InfluxDB + Grafana with Docker
 Launch InfluxDB and Grafana locally:
@@ -127,8 +136,10 @@ The script writes the following measurements:
 - `ping_latency` (`latency_ms` field; `interface`, `host` tags)
 - `speedtest` (`download_mbps`, `upload_mbps` fields; `interface` tag)
 - `download_test` (`bandwidth_mbps`, `file_size_bytes`, `duration_seconds` fields; `interface`, `file` tags)
+- `http_load_test` (`requests`, `fail_ratio`, `avg_ms`, `p95_ms` fields; `interface`, `target`, `method` tags)
 
 ## Notes for Raspberry Pi
 - The Speedtest CLI is installed via `pip install -r requirements.txt` (version pinned in `requirements.txt`).
 - The download tests use `wget` with the interface-bound IP (`--bind-address`) to ensure traffic uses the selected interface.
 - Make sure the specified test files exist at `DOWNLOAD_BASE_URL` and are reachable from both interfaces.
+- If you see CPU warnings from Locust on a Pi, lower `HTTP_LOCUST_USERS`/`HTTP_LOCUST_SPAWN_RATE` in `.env`.

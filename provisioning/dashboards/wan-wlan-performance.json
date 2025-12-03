@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
   "links": [],
   "panels": [
     {
@@ -80,7 +79,35 @@
           },
           "unit": "dtdurationms"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "smartlearn WLAN",
+                  "smartlearn LAN",
+                  "lern:galaxie LAN",
+                  "lern:galaxie WLAN"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 17,
@@ -219,10 +246,206 @@
             "uid": "wanmonitor"
           },
           "hide": false,
-          "query": "    SELECT mean(\"latency_ms\") FROM \"ping_latency\" WHERE $timeFilter AND \"host\"='wiki.bzz.ch' AND \"interface\"='wlan0' GROUP BY time(1m) fill(null)\n",
+          "query": "SELECT mean(\"latency_ms\") FROM \"ping_latency\" WHERE $timeFilter AND \"host\"='wiki.bzz.ch' AND \"interface\"='wlan0' GROUP BY time(1m) fill(null)\n",
           "rawQuery": true,
           "refId": "D",
           "resultFormat": "time_series"
+        },
+        {
+          "alias": "smartlearn LAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "query": "SELECT mean(\"latency_ms\") FROM \"ping_latency\" WHERE $timeFilter AND \"host\"='smartlearn.one' AND \"interface\"='eth0' GROUP BY time(1m) fill(null)\n",
+          "rawQuery": true,
+          "refId": "E",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "bandwidth_mbps::field",
+              "operator": "=",
+              "value": "select tag value"
+            }
+          ]
+        },
+        {
+          "alias": "smartlearn WLAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "query": "SELECT mean(\"latency_ms\") FROM \"ping_latency\" WHERE $timeFilter AND \"host\"='smartlearn.one' AND \"interface\"='wlan0' GROUP BY time(1m) fill(null)\n",
+          "rawQuery": true,
+          "refId": "F",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "bandwidth_mbps::field",
+              "operator": "=",
+              "value": "select tag value"
+            }
+          ]
+        },
+        {
+          "alias": "lern:galaxie LAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "query": "SELECT mean(\"latency_ms\") FROM \"ping_latency\" WHERE $timeFilter AND \"host\"='lerngalaxie.verlagskv.ch' AND \"interface\"='eth0' GROUP BY time(1m) fill(null)\n",
+          "rawQuery": true,
+          "refId": "G",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "bandwidth_mbps::field",
+              "operator": "=",
+              "value": "select tag value"
+            }
+          ]
+        },
+        {
+          "alias": "lern:galaxie WLAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "query": "SELECT mean(\"latency_ms\") FROM \"ping_latency\" WHERE $timeFilter AND \"host\"='lerngalaxie.verlagskv.ch' AND \"interface\"='wlan0' GROUP BY time(1m) fill(null)\n",
+          "rawQuery": true,
+          "refId": "H",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "bandwidth_mbps::field",
+              "operator": "=",
+              "value": "select tag value"
+            }
+          ]
         }
       ],
       "title": "Ping Zeiten",
@@ -669,13 +892,13 @@
     "list": []
   },
   "time": {
-    "from": "now-6h",
-    "to": "now"
+    "from": "2025-12-03T08:18:18.819Z",
+    "to": "2025-12-03T08:47:24.778Z"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "WAN WLAN Performance",
   "uid": "cf5v8er3t16gwb",
-  "version": 9,
+  "version": 10,
   "weekStart": ""
 }

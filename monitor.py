@@ -6,12 +6,17 @@ import subprocess
 import tempfile
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from locust import HttpUser, constant, task
+from locust.env import Environment
+from locust.runners import LocalRunner
+import gevent
 import netifaces
-from apscheduler.schedulers.background import BackgroundScheduler
+import requests
+from apscheduler.schedulers.gevent import GeventScheduler
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb_client.rest import ApiException
@@ -27,6 +32,11 @@ class AppConfig:
     download_interval_minutes: int = 5
     download_base_url: str = "https://example.com/test-files"
     download_files: List[str] = field(default_factory=lambda: ["5mb.zip", "50mb.zip", "80mb.zip"])
+    http_test_urls: List[str] = field(default_factory=lambda: ["https://www.google.com"])
+    http_test_interval_minutes: int = 15
+    http_locust_users: int = 100
+    http_locust_spawn_rate: int = 100
+    http_test_duration_seconds: int = 30
 
     influx_url: str = "http://localhost:8086"
     influx_token: str = ""
@@ -38,6 +48,7 @@ class AppConfig:
         default_ping_targets = ["www.google.ch", "wiki.bzz.ch"]
         default_ping_interfaces = ["eth0", "wlan0"]
         default_download_files = ["5mb.zip", "50mb.zip", "80mb.zip"]
+        default_http_test_urls = ["https://www.google.com"]
 
         def parse_list(env_name: str, fallback: List[str]) -> List[str]:
             raw = os.getenv(env_name)
@@ -65,6 +76,11 @@ class AppConfig:
             download_interval_minutes=parse_int("DOWNLOAD_INTERVAL_MINUTES", 5),
             download_base_url=os.getenv("DOWNLOAD_BASE_URL", "https://example.com/test-files"),
             download_files=parse_list("DOWNLOAD_FILES", default_download_files),
+            http_test_urls=parse_list("HTTP_TEST_URLS", default_http_test_urls),
+            http_test_interval_minutes=parse_int("HTTP_TEST_INTERVAL_MINUTES", 15),
+            http_locust_users=parse_int("HTTP_LOCUST_USERS", 100),
+            http_locust_spawn_rate=parse_int("HTTP_LOCUST_SPAWN_RATE", 100),
+            http_test_duration_seconds=parse_int("HTTP_TEST_DURATION_SECONDS", 30),
             influx_url=os.getenv("INFLUX_URL", "http://localhost:8086"),
             influx_token=os.getenv("INFLUX_TOKEN") or os.getenv("INFLUXDB_TOKEN", ""),
             influx_org=os.getenv("INFLUX_ORG", "wan-monitor"),
@@ -306,11 +322,185 @@ def run_download_tests(client: InfluxDBClient, config: AppConfig) -> None:
             )
 
 
-def start_scheduler(client: InfluxDBClient, config: AppConfig) -> BackgroundScheduler:
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(lambda: run_ping_checks(client, config), "interval", minutes=config.ping_interval_minutes, next_run_time=datetime.now())
-    scheduler.add_job(lambda: run_speedtests(client, config), "interval", minutes=config.speedtest_interval_minutes, next_run_time=datetime.now())
-    scheduler.add_job(lambda: run_download_tests(client, config), "interval", minutes=config.download_interval_minutes, next_run_time=datetime.now())
+def bind_http_session_to_source(http_session: "requests.sessions.Session", source_ip: str) -> None:
+    """
+    Ensure HTTP requests originate from the given source IP by mounting adapters with a bound source_address.
+    """
+    session = getattr(http_session, "_session", None) or getattr(http_session, "session", None) or http_session
+    adapter = requests.adapters.HTTPAdapter(pool_connections=200, pool_maxsize=200)
+    adapter.init_poolmanager(
+        connections=adapter._pool_connections,
+        maxsize=adapter._pool_maxsize,
+        block=adapter._pool_block,
+        source_address=(source_ip, 0),
+    )
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+
+
+def make_http_user(urls: List[str], source_ip: str) -> type:
+    class InterfaceHttpUser(HttpUser):  # type: ignore[misc]
+        host = ""
+        wait_time = constant(0)
+        abstract = True
+
+        def on_start(self) -> None:
+            bind_http_session_to_source(self.client, source_ip)
+
+        @task
+        def hit_targets(self) -> None:
+            for url in urls:
+                self.client.get(url, name=url, timeout=15)
+
+    InterfaceHttpUser.__name__ = f"HttpUser_{source_ip.replace('.', '_')}"
+    return InterfaceHttpUser
+
+
+def run_http_load_for_target(interface: str, url: str, config: AppConfig) -> List[Dict[str, float]]:
+    source_ip = get_interface_ip(interface)
+    if not source_ip:
+        logging.warning("No IP found for interface %s, skipping HTTP load test", interface)
+        return []
+
+    user_class = make_http_user([url], source_ip)
+    env = Environment(user_classes=[user_class])
+    runner: LocalRunner = env.create_local_runner()
+
+    logging.info(
+        "Starting HTTP load test for %s via %s (%s users for %ss)",
+        url,
+        interface,
+        config.http_locust_users,
+        config.http_test_duration_seconds,
+    )
+    try:
+        runner.start(user_count=config.http_locust_users, spawn_rate=config.http_locust_spawn_rate)
+        gevent.sleep(config.http_test_duration_seconds)
+    finally:
+        runner.quit()
+        runner.greenlet.join()
+
+    results: List[Dict[str, float]] = []
+    for (method, name), stat in env.stats.entries.items():
+        if stat.num_requests == 0:
+            continue
+        results.append(
+            {
+                "target": name,
+                "method": method,
+                "requests": float(stat.num_requests),
+                "fail_ratio": float(stat.fail_ratio),
+                "avg_ms": float(stat.avg_response_time),
+                "p95_ms": float(stat.get_response_time_percentile(0.95)),
+            }
+        )
+
+    total = env.stats.total
+    if total.num_requests:
+        results.append(
+            {
+                "target": "all",
+                "method": "ALL",
+                "requests": float(total.num_requests),
+                "fail_ratio": float(total.fail_ratio),
+                "avg_ms": float(total.avg_response_time),
+                "p95_ms": float(total.get_response_time_percentile(0.95)),
+            }
+        )
+
+    return results
+
+
+def run_http_load_job(interface: str, url: str, client: InfluxDBClient, config: AppConfig) -> None:
+    stats = run_http_load_for_target(interface, url, config)
+    for stat in stats:
+        fields = {
+            "requests": stat["requests"],
+            "fail_ratio": stat["fail_ratio"],
+            "avg_ms": stat["avg_ms"],
+            "p95_ms": stat["p95_ms"],
+        }
+        write_metric(
+            client,
+            config,
+            "http_load_test",
+            {"interface": interface, "target": stat["target"], "method": stat["method"]},
+            fields,
+        )
+        logging.info(
+            "HTTP load via %s target %s: avg %.2f ms p95 %.2f ms, fail %.3f over %.0f requests",
+            interface,
+            stat["target"],
+            stat["avg_ms"],
+            stat["p95_ms"],
+            stat["fail_ratio"],
+            stat["requests"],
+        )
+
+
+def schedule_http_load_jobs(scheduler: GeventScheduler, client: InfluxDBClient, config: AppConfig) -> None:
+    urls = config.http_test_urls
+    if not urls:
+        logging.info("No HTTP test URLs configured; skipping HTTP load scheduling")
+        return
+
+    slot_minutes = config.http_test_interval_minutes / max(1, len(urls))
+    now = datetime.now()
+    for interface in config.ping_interfaces:
+        for idx, url in enumerate(urls):
+            offset_minutes = slot_minutes * idx
+            next_run = now + timedelta(minutes=offset_minutes)
+            job_id = f"http_load_{interface}_{idx}"
+            logging.info(
+                "Scheduling HTTP load for %s via %s every %s min (offset %.2f min)",
+                url,
+                interface,
+                config.http_test_interval_minutes,
+                offset_minutes,
+            )
+            scheduler.add_job(
+                lambda i=interface, u=url: run_http_load_job(i, u, client, config),
+                "interval",
+                minutes=config.http_test_interval_minutes,
+                next_run_time=next_run,
+                id=job_id,
+                name=job_id,
+            )
+
+
+def start_scheduler(client: InfluxDBClient, config: AppConfig) -> GeventScheduler:
+    scheduler = GeventScheduler()
+    logging.info("Scheduling ping checks every %s minute(s)", config.ping_interval_minutes)
+    scheduler.add_job(
+        lambda: run_ping_checks(client, config),
+        "interval",
+        minutes=config.ping_interval_minutes,
+        next_run_time=datetime.now(),
+        id="ping_checks",
+        name="ping_checks",
+    )
+
+    logging.info("Scheduling speedtests every %s minute(s)", config.speedtest_interval_minutes)
+    scheduler.add_job(
+        lambda: run_speedtests(client, config),
+        "interval",
+        minutes=config.speedtest_interval_minutes,
+        next_run_time=datetime.now(),
+        id="speedtests",
+        name="speedtests",
+    )
+
+    logging.info("Scheduling download tests every %s minute(s)", config.download_interval_minutes)
+    scheduler.add_job(
+        lambda: run_download_tests(client, config),
+        "interval",
+        minutes=config.download_interval_minutes,
+        next_run_time=datetime.now(),
+        id="download_tests",
+        name="download_tests",
+    )
+
+    schedule_http_load_jobs(scheduler, client, config)
     scheduler.start()
     return scheduler
 
