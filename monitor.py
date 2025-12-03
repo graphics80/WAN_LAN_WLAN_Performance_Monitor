@@ -146,6 +146,8 @@ def write_metric(client: InfluxDBClient, config: AppConfig, measurement: str, ta
         write_api.write(bucket=config.influx_bucket, org=config.influx_org, record=point)
     except ApiException as exc:
         logging.error("Failed to write %s to InfluxDB: %s", measurement, exc)
+    except requests.exceptions.RequestException as exc:
+        logging.warning("InfluxDB connection error while writing %s: %s", measurement, exc)
     except Exception:
         logging.exception("Unexpected error while writing %s to InfluxDB", measurement)
 
