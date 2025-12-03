@@ -444,13 +444,17 @@ def schedule_http_load_jobs(scheduler: GeventScheduler, client: InfluxDBClient, 
         logging.info("No HTTP test URLs configured; skipping HTTP load scheduling")
         return
 
-    slot_minutes = config.http_test_interval_minutes / max(1, len(urls))
+    iface_count = max(1, len(config.ping_interfaces))
+    total_jobs = max(1, len(urls) * iface_count)
+    slot_minutes = config.http_test_interval_minutes / total_jobs
     now = datetime.now()
-    for interface in config.ping_interfaces:
-        for idx, url in enumerate(urls):
-            offset_minutes = slot_minutes * idx
+
+    for iface_idx, interface in enumerate(config.ping_interfaces):
+        for url_idx, url in enumerate(urls):
+            slot_index = iface_idx * len(urls) + url_idx
+            offset_minutes = slot_minutes * slot_index
             next_run = now + timedelta(minutes=offset_minutes)
-            job_id = f"http_load_{interface}_{idx}"
+            job_id = f"http_load_{interface}_{url_idx}"
             logging.info(
                 "Scheduling HTTP load for %s via %s every %s min (offset %.2f min)",
                 url,

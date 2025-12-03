@@ -115,7 +115,7 @@ export PING_INTERFACES="eth0,wlan0"
 ### HTTP load tests (Locust)
 - Configure targets with `HTTP_TEST_URLS` (comma separated, full URLs).
 - Concurrency and pacing: `HTTP_LOCUST_USERS` (default: 20 for Pi), `HTTP_LOCUST_SPAWN_RATE` (default: 10), `HTTP_TEST_DURATION_SECONDS` (default: 30).
-- Runs are scheduled per URL and staggered evenly within `HTTP_TEST_INTERVAL_MINUTES` to avoid overlapping load; one job per URL per interface.
+- Runs are scheduled per URL and interface and staggered evenly within `HTTP_TEST_INTERVAL_MINUTES` to avoid overlapping load; the window is divided by (`number of URLs` × `number of interfaces`).
 - Each run executes in headless mode per interface and records request totals, failure ratio, avg/p95 latency to Influx (`http_load_test`).
 - Ensure `locust` is installed via `pip install -r requirements.txt`.
 
