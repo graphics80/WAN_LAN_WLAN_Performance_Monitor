@@ -86,7 +86,7 @@ setup_systemd() {
   SERVICE_PATH="/etc/systemd/system/wan-monitor.service"
   log "Writing systemd unit to $SERVICE_PATH"
   if [[ $DRY_RUN -eq 0 ]]; then
-    cat <<'EOF' | $SUDO tee "$SERVICE_PATH" >/dev/null
+  cat <<'EOF' | $SUDO tee "$SERVICE_PATH" >/dev/null
 [Unit]
 Description=WAN/LAN/WLAN Performance Monitor
 After=network-online.target docker.service
@@ -96,7 +96,7 @@ Wants=network-online.target docker.service
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/WAN_LAN_WLAN_Performance_Monitor
-ExecStart=/bin/bash /home/pi/WAN_LAN_WLAN_Performance_Monitor/start.sh
+ExecStart=/bin/bash /home/pi/WAN_LAN_WLAN_Performance_Monitor/scripts/start.sh
 Restart=always
 RestartSec=10
 Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
