@@ -115,11 +115,37 @@ EOF
   fi
 }
 
+setup_wlan_cron() {
+  read -r -p "Add cron job to restart wlan0 every 6 hours? [y/N] " ans
+  if [[ ! "$ans" =~ ^[Yy]$ ]]; then
+    log "Skipping WLAN restart cron."
+    return
+  fi
+
+  CRON_FILE="/etc/cron.d/wan-monitor-wlan-restart"
+  SCRIPT_PATH="$ROOT_DIR/scripts/restart_wlan.sh"
+  log "Writing cron job to $CRON_FILE (runs every 6h)"
+
+  if [[ $DRY_RUN -eq 0 ]]; then
+    $SUDO chmod +x "$SCRIPT_PATH"
+    cat <<EOF | $SUDO tee "$CRON_FILE" >/dev/null
+# Restart wlan0 periodically to recover flaky Wi-Fi
+0 */6 * * * root /bin/bash $SCRIPT_PATH >> /var/log/wan-wlan-restart.log 2>&1
+EOF
+    $SUDO chmod 644 "$CRON_FILE"
+  else
+    dry "skip: chmod +x $SCRIPT_PATH"
+    dry "skip: write $CRON_FILE with 0 */6 * * * root /bin/bash $SCRIPT_PATH"
+    dry "skip: chmod 644 $CRON_FILE"
+  fi
+}
+
 main() {
   install_packages
   setup_venv
   seed_env
   setup_systemd
+  setup_wlan_cron
   log "Bootstrap complete. Next steps:"
   log "  1) Review and edit .env (tokens, passwords, URLs)."
   log "  2) Start the stack: ./start.sh"

@@ -56,7 +56,16 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
 
 ### Bootstrap script
 - Run `./install.sh` on a fresh Pi to install system dependencies (Docker + compose plugin, ping/wget, Python venv), create the venv and install requirements, optionally copy `.env.example` to `.env`, and optionally install/enable the `wan-monitor.service` systemd unit.
+- `./install.sh` can also optionally install a cron job that restarts `wlan0` every 6 hours (uses `scripts/restart_wlan.sh`) to recover flaky Wi‑Fi links.
 - `./install.sh --dry-run` prints each step it would take (apt installs, Docker enable, venv/pip steps, env copy, systemd write) without making changes.
+
+### Optional WLAN auto-restart cron
+- Script: `scripts/restart_wlan.sh` restarts a Wi‑Fi interface (default `wlan0`) and renews DHCP if `dhclient` is available.
+- Enable via `./install.sh` when prompted, or manually create `/etc/cron.d/wan-monitor-wlan-restart` with:
+  ```cron
+  0 */6 * * * root /bin/bash /home/pi/WAN_LAN_WLAN_Performance_Monitor/scripts/restart_wlan.sh >> /var/log/wan-wlan-restart.log 2>&1
+  ```
+- Remove the cron job by deleting `/etc/cron.d/wan-monitor-wlan-restart`.
 
 ### Hardware recommendation
 - A Raspberry Pi 5 with 8 GB RAM and at least 32 GB storage (SD or SSD), connected via both LAN and Wi‑Fi, is recommended for running the monitor, Docker stack, and Locust HTTP load tests.
