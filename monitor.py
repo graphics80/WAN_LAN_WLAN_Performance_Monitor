@@ -1,3 +1,8 @@
+from gevent import monkey
+
+# Patch standard library for gevent (required before importing locust/requests).
+monkey.patch_all()
+
 import logging
 import time
 

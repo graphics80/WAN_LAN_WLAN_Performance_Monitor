@@ -1,11 +1,13 @@
 import logging
-import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
-from typing import Dict, List
+from typing import Dict, List, Type
 
+import gevent
 import requests
 from apscheduler.schedulers.background import BackgroundScheduler
+from locust import HttpUser, constant, task
+from locust.env import Environment
+from locust.runners import LocalRunner
 
 from monitor_app.config import AppConfig
 from monitor_app.metrics import write_metric
@@ -28,65 +30,80 @@ def bind_http_session_to_source(http_session: "requests.sessions.Session", sourc
     session.mount("https://", adapter)
 
 
-def _collect_stats(durations_ms: List[float], failures: int) -> Dict[str, float]:
-    if not durations_ms:
-        total = failures
-        return {"requests": float(total), "fail_ratio": 1.0 if total else 0.0, "avg_ms": 0.0, "p95_ms": 0.0}
-    durations_ms.sort()
-    total_req = len(durations_ms) + failures
-    avg = sum(durations_ms) / len(durations_ms)
-    idx = min(len(durations_ms) - 1, int(0.95 * len(durations_ms)))
-    p95 = durations_ms[idx]
-    return {
-        "requests": float(total_req),
-        "fail_ratio": failures / total_req if total_req else 0.0,
-        "avg_ms": avg,
-        "p95_ms": p95,
-    }
+def make_http_user(urls: List[str], source_ip: str) -> Type[HttpUser]:
+    """Build a locust HttpUser bound to the provided source IP."""
+
+    class InterfaceHttpUser(HttpUser):  # type: ignore[misc]
+        host = ""
+        wait_time = constant(0)
+        abstract = True
+
+        def on_start(self) -> None:
+            bind_http_session_to_source(self.client, source_ip)
+
+        @task
+        def hit_targets(self) -> None:
+            for target_url in urls:
+                self.client.get(target_url, name=target_url, timeout=15)
+
+    InterfaceHttpUser.__name__ = f"HttpUser_{source_ip.replace('.', '_')}"
+    return InterfaceHttpUser
 
 
 def run_http_load_for_target(interface: str, url: str, config: AppConfig) -> List[Dict[str, float]]:
-    """Run a lightweight HTTP load using threads for a single URL/interface and return stats."""
+    """Run locust locally for a single URL/interface and return per-target stats."""
     source_ip = get_interface_ip(interface)
     if not source_ip:
         logging.warning("No IP found for interface %s, skipping HTTP load test", interface)
         return []
 
-    session = requests.Session()
-    bind_http_session_to_source(session, source_ip)
+    user_class = make_http_user([url], source_ip)
+    env = Environment(user_classes=[user_class])
+    runner: LocalRunner = env.create_local_runner()
 
-    durations: List[float] = []
-    failures = 0
-    deadline = time.monotonic() + config.http_test_duration_seconds
+    logging.info(
+        "Starting HTTP load test for %s via %s (%s users for %ss)",
+        url,
+        interface,
+        config.http_locust_users,
+        config.http_test_duration_seconds,
+    )
+    try:
+        runner.start(user_count=config.http_locust_users, spawn_rate=config.http_locust_spawn_rate)
+        gevent.sleep(config.http_test_duration_seconds)
+    finally:
+        runner.quit()
+        runner.greenlet.join()
 
-    def worker() -> None:
-        nonlocal failures
-        start = time.perf_counter()
-        try:
-            resp = session.get(url, timeout=10)
-            elapsed_ms = (time.perf_counter() - start) * 1000
-            if resp.status_code < 400:
-                durations.append(elapsed_ms)
-            else:
-                failures += 1
-        except Exception:
-            failures += 1
+    results: List[Dict[str, float]] = []
+    for (method, name), stat in env.stats.entries.items():
+        if stat.num_requests == 0:
+            continue
+        results.append(
+            {
+                "target": name,
+                "method": method,
+                "requests": float(stat.num_requests),
+                "fail_ratio": float(stat.fail_ratio),
+                "avg_ms": float(stat.avg_response_time),
+                "p95_ms": float(stat.get_response_time_percentile(0.95)),
+            }
+        )
 
-    with ThreadPoolExecutor(max_workers=config.http_locust_users) as executor:
-        futures = []
-        while time.monotonic() < deadline:
-            futures.append(executor.submit(worker))
-        for _ in as_completed(futures):
-            pass
+    total = env.stats.total
+    if total.num_requests:
+        results.append(
+            {
+                "target": "all",
+                "method": "ALL",
+                "requests": float(total.num_requests),
+                "fail_ratio": float(total.fail_ratio),
+                "avg_ms": float(total.avg_response_time),
+                "p95_ms": float(total.get_response_time_percentile(0.95)),
+            }
+        )
 
-    stats = _collect_stats(durations, failures)
-    return [
-        {
-            "target": url,
-            "method": "GET",
-            **stats,
-        }
-    ]
+    return results
 
 
 def run_http_load_job(interface: str, url: str, client, config: AppConfig) -> None:
