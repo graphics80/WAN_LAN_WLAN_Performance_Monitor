@@ -77,7 +77,35 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "http_load_test.distinct { interface: eth0, method: https://lerngalaxie.verlagskv.ch }",
+                  "http_load_test.distinct { interface: eth0, method: https://smartlearn.one }",
+                  "http_load_test.distinct { method: https://lerngalaxie.verlagskv.ch, interface: wlan0 }",
+                  "http_load_test.distinct { interface: wlan0, method: https://smartlearn.one }"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 15,
@@ -100,7 +128,6 @@
       },
       "targets": [
         {
-          "alias": "p95 LAN Lerngalaxie",
           "datasource": {
             "type": "influxdb",
             "uid": "wanmonitor"
@@ -114,11 +141,24 @@
             },
             {
               "params": [
+                "interface::tag"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "method::tag"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
                 "null"
               ],
               "type": "fill"
             }
           ],
+          "hide": false,
           "measurement": "http_load_test",
           "orderByTime": "ASC",
           "policy": "autogen",
@@ -138,181 +178,7 @@
               }
             ]
           ],
-          "tags": [
-            {
-              "key": "interface::tag",
-              "operator": "=",
-              "value": "eth0"
-            },
-            {
-              "condition": "AND",
-              "key": "target::tag",
-              "operator": "=",
-              "value": "https://lerngalaxie.verlagskv.ch"
-            }
-          ]
-        },
-        {
-          "alias": "p95 WLAN Lerngalaxie",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "wanmonitor"
-          },
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "hide": false,
-          "measurement": "http_load_test",
-          "orderByTime": "ASC",
-          "policy": "autogen",
-          "refId": "B",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "p95_ms"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "distinct"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "interface::tag",
-              "operator": "=",
-              "value": "wlan0"
-            },
-            {
-              "condition": "AND",
-              "key": "target::tag",
-              "operator": "=",
-              "value": "https://lerngalaxie.verlagskv.ch"
-            }
-          ]
-        },
-        {
-          "alias": "p95 LAN Smartlearn",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "wanmonitor"
-          },
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "hide": false,
-          "measurement": "http_load_test",
-          "orderByTime": "ASC",
-          "policy": "autogen",
-          "refId": "C",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "p95_ms"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "distinct"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "interface::tag",
-              "operator": "=",
-              "value": "eth0"
-            },
-            {
-              "condition": "AND",
-              "key": "target::tag",
-              "operator": "=",
-              "value": "https://smartlearn.one"
-            }
-          ]
-        },
-        {
-          "alias": "p95 WLAN Smartlearn",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "wanmonitor"
-          },
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "hide": false,
-          "measurement": "http_load_test",
-          "orderByTime": "ASC",
-          "policy": "autogen",
-          "refId": "D",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "p95_ms"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "distinct"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "interface::tag",
-              "operator": "=",
-              "value": "wlan0"
-            },
-            {
-              "condition": "AND",
-              "key": "target::tag",
-              "operator": "=",
-              "value": "https://smartlearn.one"
-            }
-          ]
+          "tags": []
         }
       ],
       "title": "HTTP p95",
@@ -796,8 +662,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1133,8 +998,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1182,6 +1046,7 @@
       "type": "timeseries"
     }
   ],
+  "refresh": "",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
