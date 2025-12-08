@@ -56,9 +56,43 @@ def download_file(url: str, interface: str) -> Optional[Dict[str, float]]:
 def run_download_tests(client, config: AppConfig) -> None:
     """Run download tests per interface/file and write metrics."""
     logging.info("Starting download tests")
+
+    def resolve_url(entry: str) -> Optional[tuple[str, str]]:
+        """
+        Return (label, url) for a download entry.
+        Supports:
+        - full URLs (label derived from path)
+        - "label|url" entries to override label while using an absolute URL
+        - relative filenames combined with download_base_url
+        """
+        label = entry
+        raw = entry
+
+        if "|" in entry:
+            parts = entry.split("|", 1)
+            label = parts[0].strip() or label
+            raw = parts[1].strip()
+
+        if not raw:
+            return None
+
+        if raw.startswith(("http://", "https://")):
+            url = raw
+            # Use last path segment as label if none was provided.
+            label = label or Path(url).name or url
+        else:
+            url = f"{config.download_base_url.rstrip('/')}/{raw}"
+            label = label or raw
+
+        return label, url
+
     for interface in config.ping_interfaces:
-        for filename in config.download_files:
-            url = f"{config.download_base_url.rstrip('/')}/{filename}"
+        for entry in config.download_files:
+            resolved = resolve_url(entry)
+            if not resolved:
+                logging.warning("Invalid download entry '%s', skipping", entry)
+                continue
+            label, url = resolved
             metrics = download_file(url, interface)
             if not metrics:
                 continue
@@ -66,13 +100,13 @@ def run_download_tests(client, config: AppConfig) -> None:
                 client,
                 config,
                 "download_test",
-                {"interface": interface, "file": filename},
+                {"interface": interface, "file": label},
                 metrics,
             )
             logging.info(
                 "Download via %s %s: %.2f Mbps (%.2fs)",
                 interface,
-                filename,
+                label,
                 metrics["bandwidth_mbps"],
                 metrics["duration_seconds"],
             )

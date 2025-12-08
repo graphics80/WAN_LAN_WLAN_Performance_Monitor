@@ -662,7 +662,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -945,6 +946,102 @@
               "value": "wlan0"
             }
           ]
+        },
+        {
+          "alias": "Download Onedrive WLAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "5m"
+              ],
+              "type": "time"
+            }
+          ],
+          "hide": false,
+          "measurement": "download_test",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "G",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "bandwidth_mbps"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "distinct"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interface::tag",
+              "operator": "=",
+              "value": "wlan0"
+            },
+            {
+              "condition": "AND",
+              "key": "file::tag",
+              "operator": "=",
+              "value": "onedrive"
+            }
+          ]
+        },
+        {
+          "alias": "Download Onedrive LAN",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "wanmonitor"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "5m"
+              ],
+              "type": "time"
+            }
+          ],
+          "hide": false,
+          "measurement": "download_test",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "H",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "bandwidth_mbps"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "distinct"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interface::tag",
+              "operator": "=",
+              "value": "eth0"
+            },
+            {
+              "condition": "AND",
+              "key": "file::tag",
+              "operator": "=",
+              "value": "onedrive"
+            }
+          ]
         }
       ],
       "title": "Download Performance",
@@ -998,7 +1095,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1053,13 +1151,13 @@
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-12h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "WAN WLAN Performance",
   "uid": "cf5v8er3t16gwb",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
