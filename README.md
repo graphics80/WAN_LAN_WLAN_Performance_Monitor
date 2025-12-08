@@ -3,7 +3,7 @@
 Python script for a Raspberry Pi that measures network performance via the `eth0` and `wlan0` interfaces and stores the results in InfluxDB, ready to be visualized in Grafana.
 
 ## Features
-- Ping latency for multiple targets every minute (per interface)
+- Ping latency for multiple targets every 10 seconds (per interface)
 - Speedtest download/upload every 60 minutes (per interface) using the Speedtest CLI
 - Download-based bandwidth checks every 5 minutes for 5 MB, 50 MB, and 80 MB files (per interface)
 - HTTP end-to-end load tests with Locust (configurable targets/users, per interface)
@@ -115,7 +115,7 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
 - Dashboards: provisioned from `provisioning/dashboards/wan-wlan-performance.json` via `provisioning/dashboards/dashboards.yaml`. On a fresh clone, `docker compose up -d` will load the dashboard automatically.
 
 ### Scheduling intervals
-- `PING_INTERVAL_MINUTES` (default: 1)
+- `PING_INTERVAL_SECONDS` (default: 10) — `PING_INTERVAL_MINUTES` is deprecated but still honored for backward compatibility
 - `SPEEDTEST_INTERVAL_MINUTES` (default: 60)
 - `DOWNLOAD_INTERVAL_MINUTES` (default: 5)
 - `HTTP_TEST_INTERVAL_MINUTES` (default: 15)

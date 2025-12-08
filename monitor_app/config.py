@@ -12,9 +12,10 @@ class AppConfig:
     ping_targets: List[str] = field(default_factory=lambda: ["www.google.ch", "wiki.bzz.ch"])
     ping_interfaces: List[str] = field(default_factory=lambda: ["eth0", "wlan0"])
     ping_count: int = 4
-    ping_interval_minutes: int = 1
+    ping_interval_seconds: int = 10
     speedtest_interval_minutes: int = 60
     download_interval_minutes: int = 5
+    download_max_instances: int = 3
     download_base_url: str = "https://example.com/test-files"
     download_files: List[str] = field(default_factory=lambda: ["5mb.zip", "50mb.zip", "80mb.zip"])
     http_test_urls: List[str] = field(default_factory=lambda: ["https://www.google.com"])
@@ -52,13 +53,27 @@ class AppConfig:
                 logging.warning("Invalid value for %s=%s, using default %s", env_name, raw, fallback)
                 return fallback
 
+        ping_interval_seconds = parse_int("PING_INTERVAL_SECONDS", 10)
+        if "PING_INTERVAL_SECONDS" not in os.environ and "PING_INTERVAL_MINUTES" in os.environ:
+            # Support the previous minutes-based setting to keep existing .env files working.
+            minutes_value = parse_int("PING_INTERVAL_MINUTES", 1)
+            ping_interval_seconds = minutes_value * 60
+            logging.info(
+                "PING_INTERVAL_MINUTES is deprecated; please switch to PING_INTERVAL_SECONDS (currently %s seconds)",
+                ping_interval_seconds,
+            )
+        elif ping_interval_seconds <= 0:
+            logging.warning("PING_INTERVAL_SECONDS must be positive, using default of 10")
+            ping_interval_seconds = 10
+
         return AppConfig(
             ping_targets=parse_list("PING_TARGETS", default_ping_targets),
             ping_interfaces=parse_list("PING_INTERFACES", default_ping_interfaces),
             ping_count=parse_int("PING_COUNT", 4),
-            ping_interval_minutes=parse_int("PING_INTERVAL_MINUTES", 1),
+            ping_interval_seconds=ping_interval_seconds,
             speedtest_interval_minutes=parse_int("SPEEDTEST_INTERVAL_MINUTES", 60),
             download_interval_minutes=parse_int("DOWNLOAD_INTERVAL_MINUTES", 5),
+            download_max_instances=parse_int("DOWNLOAD_MAX_INSTANCES", 3),
             download_base_url=os.getenv("DOWNLOAD_BASE_URL", "https://example.com/test-files"),
             download_files=parse_list("DOWNLOAD_FILES", default_download_files),
             http_test_urls=parse_list("HTTP_TEST_URLS", default_http_test_urls),

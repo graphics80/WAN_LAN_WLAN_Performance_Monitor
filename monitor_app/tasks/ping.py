@@ -1,6 +1,7 @@
 import logging
 import shlex
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional
 
 from monitor_app.config import AppConfig
@@ -37,9 +38,21 @@ def ping_host(host: str, interface: str, count: int) -> Optional[float]:
 def run_ping_checks(client, config: AppConfig) -> None:
     """Ping all configured hosts per interface and write metrics."""
     logging.info("Starting ping checks")
-    for interface in config.ping_interfaces:
-        for host in config.ping_targets:
-            latency = ping_host(host, interface, config.ping_count)
+    tasks = [(interface, host) for interface in config.ping_interfaces for host in config.ping_targets]
+    if not tasks:
+        return
+
+    with ThreadPoolExecutor(max_workers=len(tasks)) as executor:
+        future_map = {
+            executor.submit(ping_host, host, interface, config.ping_count): (interface, host) for interface, host in tasks
+        }
+        for future in as_completed(future_map):
+            interface, host = future_map[future]
+            try:
+                latency = future.result()
+            except Exception as exc:  # pragma: no cover - defensive logging
+                logging.warning("Ping failed for %s on %s: %s", host, interface, exc)
+                continue
             if latency is None:
                 continue
             write_metric(
