@@ -50,7 +50,7 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
    ```
 
 ### One-shot start script
-- Use `./scripts/start.sh` to launch Docker (InfluxDB + Grafana), wait briefly for Influx health, and then start the monitor (prefers `.venv/bin/python` if present). This script is used by the autostart service below. Thin wrappers remain at `./start.sh` and `./restart.sh` for backward compatibility.
+- Use `./scripts/start.sh` to launch Docker (InfluxDB + Grafana), wait briefly for Influx health, and then start the monitor (prefers `.venv/bin/python` if present). This script is used by the autostart service below.
 - `./scripts/start.sh` also resets the Grafana admin password each time to the value in `.env` (`GRAFANA_PASSWORD`), so updates take effect even with a persistent data volume.
 - Use `./scripts/restart.sh` to stop the systemd service (or the monitor process if systemd is unavailable), bring the Docker stack down, and start everything again so `.env` changes are applied.
 
@@ -83,7 +83,7 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
    Type=simple
    User=pi
    WorkingDirectory=/home/pi/WAN_LAN_WLAN_Performance_Monitor
-   ExecStart=/bin/bash /home/pi/WAN_LAN_WLAN_Performance_Monitor/start.sh
+   ExecStart=/bin/bash /home/pi/WAN_LAN_WLAN_Performance_Monitor/scripts/start.sh
    Restart=always
    RestartSec=10
    Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin

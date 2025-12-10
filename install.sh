@@ -148,7 +148,7 @@ main() {
   setup_wlan_cron
   log "Bootstrap complete. Next steps:"
   log "  1) Review and edit .env (tokens, passwords, URLs)."
-  log "  2) Start the stack: ./start.sh"
+  log "  2) Start the stack: ./scripts/start.sh"
   log "  3) If you skipped systemd setup, you can add it later via install.sh."
 }
 

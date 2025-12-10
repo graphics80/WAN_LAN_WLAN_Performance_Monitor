@@ -23,6 +23,6 @@ if [[ -n "$SYSTEMCTL" ]]; then
   echo "Starting wan-monitor.service..."
   exec sudo systemctl start wan-monitor.service
 else
-  echo "Starting monitor with refreshed environment via start.sh..."
+  echo "Starting monitor with refreshed environment via scripts/start.sh..."
   exec "$ROOT_DIR/scripts/start.sh"
 fi
