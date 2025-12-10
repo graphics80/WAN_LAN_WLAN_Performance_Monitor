@@ -114,6 +114,13 @@ Python script for a Raspberry Pi that measures network performance via the `eth0
 - Datasource: provisioned from `provisioning/datasources/influx.yml` (InfluxQL, URL `http://influxdb:8086`, token/org/bucket from `.env`).
 - Dashboards: provisioned from `provisioning/dashboards/wan-wlan-performance.json` via `provisioning/dashboards/dashboards.yaml`. On a fresh clone, `docker compose up -d` will load the dashboard automatically.
 
+### Task toggles
+- `ENABLE_PING` (default: true) — disable to skip scheduling ping checks.
+- `ENABLE_SPEEDTEST` (default: true) — disable to skip speedtests.
+- `ENABLE_DOWNLOAD_TESTS` (default: true) — disable to skip download bandwidth checks.
+- `ENABLE_HTTP_TESTS` (default: true) — disable to skip Locust HTTP load jobs.
+The monitor logs which tasks are disabled at startup.
+
 ### Scheduling intervals
 - `PING_INTERVAL_SECONDS` (default: 10) — `PING_INTERVAL_MINUTES` is deprecated but still honored for backward compatibility
 - `SPEEDTEST_INTERVAL_MINUTES` (default: 60)

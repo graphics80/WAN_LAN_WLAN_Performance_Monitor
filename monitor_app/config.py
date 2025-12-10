@@ -9,6 +9,10 @@ from typing import List
 class AppConfig:
     """Runtime configuration loaded from environment variables (and optionally .env)."""
 
+    enable_ping: bool = True
+    enable_speedtest: bool = True
+    enable_download_tests: bool = True
+    enable_http_tests: bool = True
     ping_targets: List[str] = field(default_factory=lambda: ["www.google.ch", "wiki.bzz.ch"])
     ping_interfaces: List[str] = field(default_factory=lambda: ["eth0", "wlan0"])
     ping_count: int = 4
@@ -53,6 +57,18 @@ class AppConfig:
                 logging.warning("Invalid value for %s=%s, using default %s", env_name, raw, fallback)
                 return fallback
 
+        def parse_bool(env_name: str, fallback: bool) -> bool:
+            raw = os.getenv(env_name)
+            if raw is None:
+                return fallback
+            value = raw.strip().lower()
+            if value in ("1", "true", "yes", "on"):
+                return True
+            if value in ("0", "false", "no", "off"):
+                return False
+            logging.warning("Invalid value for %s=%s, using default %s", env_name, raw, fallback)
+            return fallback
+
         ping_interval_seconds = parse_int("PING_INTERVAL_SECONDS", 10)
         if "PING_INTERVAL_SECONDS" not in os.environ and "PING_INTERVAL_MINUTES" in os.environ:
             # Support the previous minutes-based setting to keep existing .env files working.
@@ -67,6 +83,10 @@ class AppConfig:
             ping_interval_seconds = 10
 
         return AppConfig(
+            enable_ping=parse_bool("ENABLE_PING", True),
+            enable_speedtest=parse_bool("ENABLE_SPEEDTEST", True),
+            enable_download_tests=parse_bool("ENABLE_DOWNLOAD_TESTS", True),
+            enable_http_tests=parse_bool("ENABLE_HTTP_TESTS", True),
             ping_targets=parse_list("PING_TARGETS", default_ping_targets),
             ping_interfaces=parse_list("PING_INTERFACES", default_ping_interfaces),
             ping_count=parse_int("PING_COUNT", 4),
