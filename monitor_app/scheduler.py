@@ -22,6 +22,7 @@ def start_scheduler(client, config: AppConfig) -> BackgroundScheduler:
             next_run_time=datetime.now(),
             id="ping_checks",
             name="ping_checks",
+            max_instances=config.ping_max_instances,
         )
     else:
         logging.info("Ping checks disabled via ENABLE_PING=false; skipping scheduling")

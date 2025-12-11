@@ -42,3 +42,23 @@ def test_start_scheduler_skips_disabled(monkeypatch):
     monkeypatch.setattr(scheduler, "BackgroundScheduler", lambda: DummyScheduler())
     scheduler.start_scheduler(None, cfg)
     assert added == []
+
+
+def test_ping_job_respects_max_instances(monkeypatch):
+    cfg = AppConfig(ping_interfaces=["eth0"], ping_max_instances=4)
+
+    jobs = []
+
+    class DummyScheduler:
+        def add_job(self, func, trigger, **kwargs):
+            jobs.append(kwargs)
+
+        def start(self):
+            return
+
+    monkeypatch.setattr(scheduler, "BackgroundScheduler", lambda: DummyScheduler())
+    scheduler.start_scheduler(None, cfg)
+
+    ping_jobs = [job for job in jobs if job["id"] == "ping_checks"]
+    assert ping_jobs, "Ping job should be scheduled"
+    assert ping_jobs[0]["max_instances"] == 4

@@ -123,6 +123,7 @@ The monitor logs which tasks are disabled at startup.
 
 ### Scheduling intervals
 - `PING_INTERVAL_SECONDS` (default: 10) — `PING_INTERVAL_MINUTES` is deprecated but still honored for backward compatibility
+- `PING_MAX_INSTANCES` (default: 2) — allow overlapping ping runs when one is still running to avoid skipped executions
 - `SPEEDTEST_INTERVAL_MINUTES` (default: 60)
 - `DOWNLOAD_INTERVAL_MINUTES` (default: 5)
 - `HTTP_TEST_INTERVAL_MINUTES` (default: 15)

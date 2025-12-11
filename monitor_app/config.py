@@ -17,6 +17,7 @@ class AppConfig:
     ping_interfaces: List[str] = field(default_factory=lambda: ["eth0", "wlan0"])
     ping_count: int = 4
     ping_interval_seconds: int = 10
+    ping_max_instances: int = 2
     speedtest_interval_minutes: int = 60
     download_interval_minutes: int = 5
     download_max_instances: int = 3
@@ -91,6 +92,7 @@ class AppConfig:
             ping_interfaces=parse_list("PING_INTERFACES", default_ping_interfaces),
             ping_count=parse_int("PING_COUNT", 4),
             ping_interval_seconds=ping_interval_seconds,
+            ping_max_instances=parse_int("PING_MAX_INSTANCES", 2),
             speedtest_interval_minutes=parse_int("SPEEDTEST_INTERVAL_MINUTES", 60),
             download_interval_minutes=parse_int("DOWNLOAD_INTERVAL_MINUTES", 5),
             download_max_instances=parse_int("DOWNLOAD_MAX_INSTANCES", 3),
